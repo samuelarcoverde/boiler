@@ -1,15 +1,17 @@
-datatype Database = Initialise | Register | Terminate | Analysis | Query | Data | Pressure
+datatype SysModule = DB | SN | CT | AC
+datatype SysAction = Initialise | Register | Terminate | Analysis 
 
-channel internalAction
-channel dbAction : Database
+channel query, data, pressure, stop, start, command -- global events
+channel internalAction -- placeholder event?
+channel sysEvent : SysModule.SysAction
 
-P = dbAction.Query -> dbAction.Data -> P
+P = query -> data -> P
 Q = internalAction -> Q
 
-Database_Initialise = dbAction.Initialise -> Database_Register
-Database_Register = dbAction.Register -> dbAction.Pressure -> (Database_Register [] Database_Analysis [] Database_Terminate)
-Database_Terminate = dbAction.Terminate -> Database_Initialise
-Database_Analysis = dbAction.Analysis -> dbAction.Query -> dbAction.Data -> Database_Register
+Database_Initialise =  sysEvent.DB.Initialise -> Database_Register
+Database_Register =  sysEvent.DB.Register -> pressure -> (Database_Register [] Database_Analysis [] Database_Terminate)
+Database_Terminate =  sysEvent.DB.Terminate -> Database_Initialise
+Database_Analysis =  sysEvent.DB.Analysis -> query -> data -> Database_Register
 HMSC_Database = internalAction -> Database_Initialise
 DatabaseWCoordAct = HMSC_Database\{internalAction}
 
