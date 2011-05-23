@@ -22,6 +22,24 @@ Control_Analysis = sysEvent.CT.Analysis -> query -> data -> command -> Control_R
 HMSC_Control = internalAction -> Control_Initialise
 ControlWCoordAct = HMSC_Control\{internalAction}
 
+Sensor_Initialise = sysEvent.SN.Initialise -> start -> Sensor_Register
+Sensor_Register = sysEvent.SN.Register -> pressure -> (Sensor_Register [] Sensor_Terminate [] Sensor_Analysis)
+Sensor_Terminate = sysEvent.SN.Terminate -> stop -> Sensor_Initialise
+Sensor_Analysis = sysEvent.SN.Analysis -> Sensor_Register
+HMSC_Sensor = internalAction -> Sensor_Initialise
+SensorWCoordAct = HMSC_Sensor\{internalAction}
+
+Actuator_Initialise = sysEvent.AC.Initialise -> Actuator_Register
+Actuator_Register = sysEvent.AC.Register -> (Actuator_Register [] Actuator_Analysis [] Actuator_Terminate)
+Actuator_Terminate = sysEvent.AC.Terminate -> Actuator_Initialise
+Actuator_Analysis = sysEvent.AC.Analysis -> command -> Actuator_Register
+HMSC_Actuator = internalAction -> Actuator_Analysis
+ActuatorWCoordAct = HMSC_Actuator\{internalAction}
+
+--||ComponentsWCoordAct = (DatabaseWCoordAct || ControlWCoordAct || SensorWCoordAct || ActuatorWCoordAct).
+
+
+
 -- Control_Initialise = (s_Control_Initialise -> start -> END).
 -- Control_Register = (s_Control_Register -> END).
 -- Control_Terminate = (s_Control_Terminate -> stop -> END).
