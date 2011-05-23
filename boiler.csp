@@ -1,0 +1,38 @@
+datatype Database = Initialise | Register | Terminate | Analysis | Query | Data | Pressure
+
+channel internalAction
+channel dbAction : Database
+
+P = dbAction.Query -> dbAction.Data -> P
+Q = internalAction -> Q
+
+Database_Initialise = dbAction.Initialise -> Database_Register
+Database_Register = dbAction.Register -> dbAction.Pressure -> (Database_Register [] Database_Analysis [] Database_Terminate)
+Database_Terminate = dbAction.Terminate -> Database_Initialise
+Database_Analysis = dbAction.Analysis -> dbAction.Query -> dbAction.Data -> Database_Register
+HMSC_Database = internalAction -> Database_Initialise
+DatabaseWCoordAct = HMSC_Database\{internalAction}
+
+
+
+-- Database_Initialise = s_Database_Initialise -> SKIP
+-- Database_Register = s_Database_Register -> pressure -> SKIP
+-- Database_Terminate = s_Database_Terminate -> SKIP
+-- Database_Analysis = s_Database_Analysis -> query -> data -> SKIP
+-- HMSC_Database = internalAction -> N0
+-- N0 = Database_Initialise;N0_Adj
+-- N1 = Database_Register;N1_Adj
+-- N2 = Database_Analysis;N2_Adj
+-- N3 = Database_Terminate;N3_Adj
+-- N0_Adj = internalAction -> N1
+-- N1_Adj = internalAction -> N1 | internalAction -> N2 | internalAction -> N3
+-- N2_Adj = internalAction -> N1
+-- N3_Adj = internalAction -> N0
+-- deterministic ||DatabaseWCoordAct = HMSC_Database\{internalAction}
+
+-- channel up,down
+-- COUNT(lo,n,hi) =
+--     lo < n & down -> COUNT(lo,n-1,hi)
+--   []
+--     n < hi & up -> COUNT(lo,n+1, hi)
+
