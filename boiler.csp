@@ -15,6 +15,27 @@ Database_Analysis =  sysEvent.DB.Analysis -> query -> data -> Database_Register
 HMSC_Database = internalAction -> Database_Initialise
 DatabaseWCoordAct = HMSC_Database\{internalAction}
 
+Control_Initialise = sysEvent.CT.Initialise -> start -> Control_Register
+Control_Register = sysEvent.CT.Register -> (Control_Register [] Control_Analysis [] Control_Terminate)
+Control_Terminate = sysEvent.CT.Terminate -> stop -> Control_Initialise
+Control_Analysis = sysEvent.CT.Analysis -> query -> data -> command -> Control_Register
+HMSC_Control = internalAction -> Control_Initialise
+ControlWCoordAct = HMSC_Control\{internalAction}
+
+-- Control_Initialise = (s_Control_Initialise -> start -> END).
+-- Control_Register = (s_Control_Register -> END).
+-- Control_Terminate = (s_Control_Terminate -> stop -> END).
+-- Control_Analysis = (s_Control_Analysis -> query -> data -> command -> END).
+-- HMSC_Control = (internalAction -> N0),
+-- N0 = Control_Initialise;N0_Adj,
+-- N1 = Control_Register;N1_Adj,
+-- N2 = Control_Analysis;N2_Adj,
+-- N3 = Control_Terminate;N3_Adj,
+-- N0_Adj = (internalAction -> N1),
+-- N1_Adj = (internalAction -> N1 | internalAction -> N2 | internalAction -> N3),
+-- N2_Adj = (internalAction -> N1),
+-- N3_Adj = (internalAction -> N0).
+-- deterministic ||ControlWCoordAct = HMSC_Control\{internalAction}.
 
 
 -- Database_Initialise = s_Database_Initialise -> SKIP
