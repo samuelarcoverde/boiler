@@ -25,3 +25,10 @@ component with alphabet fon, off, query, data, commandg and a fourth
 model for the Actuator component with alphabet fcommandg. In addition, all
 traces defined by the semantics of the MSC specification must be maximal
 traces of the composition of these four LTSs.
+
+
+
+TUdo começa com a inicialização do sistema
+
+O "Control" ao receber uma mensagem de "start" ativa o sensor "Sensor"
+Ao receber alguma "pressure" o "Sensor" envia os dados para o "Database"
