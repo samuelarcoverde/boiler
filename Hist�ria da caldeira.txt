@@ -1,0 +1,27 @@
+The example
+is based on a Boiler Control system where a Control unit operates a Sensor
+and an Actuator to control the pressure of a steam boiler. A Database is used
+as a repository to buffer Sensor information while the Control unit performs
+calculations and sends commands to the Actuator.
+
+O Boiler Control (Controle de Caldeira) possui uma unidade chamada Control que opera um Sensor e um Actuator para controlar a pressão de uma caldeira de vapor. Um Database é usado com repositório para bufferizar as informações de um Sensor enquanto a unidade Control realiza cálculos e envia comandos para o Actuator.
+
+The language is a syntactic subset of the International Telecommunication
+Union (ITU) standard for MSCs [ITU 1996]. A basic MSC (bMSC) describes
+a finite interaction between a set of components (see Figure 1). Each vertical
+arrow represents a component and is called an instance. Arrow must be horizontal
+and represents messages, the arrow source on one instance corresponds
+to a message output and its target on a different instance corresponds to a message input. We refer to message outputs and inputs as events. In addition,
+we use the terms instance and component interchangeably. The formal definition
+of bMSCs is presented below. Note that a message label uniquely identifies
+the sending and receiving component.
+
+
+For the Boiler Control system of Figure 4, an architecture model is one
+which is the result of composing in parallel four LTSs: One with alphabet with
+fpressure, on, offg modeling the Sensor component, another with alphabet fdata,
+query, pressureg modeling the Database component, a third modeling the Control
+component with alphabet fon, off, query, data, commandg and a fourth
+model for the Actuator component with alphabet fcommandg. In addition, all
+traces defined by the semantics of the MSC specification must be maximal
+traces of the composition of these four LTSs.
