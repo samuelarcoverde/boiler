@@ -36,6 +36,14 @@ Actuator_Analysis = sysEvent.AC.Analysis -> command -> Actuator_Register
 HMSC_Actuator = internalAction -> Actuator_Analysis
 ActuatorWCoordAct = HMSC_Actuator\{internalAction}
 
+--AllInternalEvents = {x.y | x <- SysModule, y <- SysAction}
+--Database = DatabaseWCoordAct\{{|AllInternalEvents|}}
+
+Database = DatabaseWCoordAct \ {sysEvent.SN.Initialise,sysEvent.SN.Terminate,sysEvent.AC.Initialise,sysEvent.DB.Register,sysEvent.DB.Analysis,sysEvent.CT.Analysis,sysEvent.AC.Terminate,sysEvent.DB.Initialise,sysEvent.CT.Initialise,sysEvent.AC.Register,sysEvent.AC.Analysis,sysEvent.CT.Terminate,sysEvent.DB.Terminate,sysEvent.SN.Register,sysEvent.SN.Analysis}
+--
+DatabaseOnHand = pressure -> DH1
+DH1 = pressure -> DH1 [] query -> data -> DatabaseOnHand
+
 --||ComponentsWCoordAct = (DatabaseWCoordAct || ControlWCoordAct || SensorWCoordAct || ActuatorWCoordAct).
 
 
