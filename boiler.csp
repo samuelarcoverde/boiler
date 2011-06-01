@@ -62,6 +62,19 @@ assert Control [FD= ControlOnHand
 assert Actuator [FD= ActuatorOnHand
 assert Sensor [FD= SensorOnHand
 
+-- compositions
+
+dbAlph = {data,pressure,query}
+ctAlph = {command,data,query,start,stop}
+snAlph = {pressure,start,stop}
+acAlph = {command}
+
+ArchitectureModelP1 = (DatabaseOnHand [dbAlph||ctAlph] ControlOnHand)
+ArchitectureModelP2 = (ArchitectureModelP1 [union(dbAlph,ctAlph)||acAlph] ActuatorOnHand)
+ArchitectureModel = (ArchitectureModelP2 [union(union(dbAlph,ctAlph),acAlph)||snAlph] SensorOnHand)
+
+
+
 
 
 
