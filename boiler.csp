@@ -36,52 +36,33 @@ Actuator_Analysis = sysEvent.AC.Analysis -> command -> Actuator_Register
 HMSC_Actuator = internalAction -> Actuator_Analysis
 ActuatorWCoordAct = HMSC_Actuator\{internalAction}
 
---AllInternalEvents = {x.y | x <- SysModule, y <- SysAction}
+internalEvents = {sysEvent.x.y | x <- SysModule, y <- SysAction}
 --Database = DatabaseWCoordAct\{{|AllInternalEvents|}}
 
-Database = DatabaseWCoordAct \ {sysEvent.SN.Initialise,sysEvent.SN.Terminate,sysEvent.AC.Initialise,sysEvent.DB.Register,sysEvent.DB.Analysis,sysEvent.CT.Analysis,sysEvent.AC.Terminate,sysEvent.DB.Initialise,sysEvent.CT.Initialise,sysEvent.AC.Register,sysEvent.AC.Analysis,sysEvent.CT.Terminate,sysEvent.DB.Terminate,sysEvent.SN.Register,sysEvent.SN.Analysis}
---
+-- Nos proximos processos, vamos simular a keyword "deterministic" do LTSA ao criar um processo igual ao
+-- processo "determinizado", e depois provar que ele eh um refinamento do processo original (sem deterministic)
+
+Database = DatabaseWCoordAct \ internalEvents
 DatabaseOnHand = pressure -> DH1
 DH1 = pressure -> DH1 [] query -> data -> DatabaseOnHand
 
---||ComponentsWCoordAct = (DatabaseWCoordAct || ControlWCoordAct || SensorWCoordAct || ActuatorWCoordAct).
+Control = ControlWCoordAct \ internalEvents
+ControlOnHand = start -> C1
+C1 = (stop -> ControlOnHand) [] (query -> data -> command -> C1)
+
+Actuator = ActuatorWCoordAct \ internalEvents
+ActuatorOnHand = command -> ActuatorOnHand
+
+Sensor = SensorWCoordAct \ internalEvents
+SensorOnHand = start -> pressure -> S1
+S1 = (pressure -> S1) [] (stop -> SensorOnHand)
+
+assert Database [FD= DatabaseOnHand
+assert Control [FD= ControlOnHand
+assert Actuator [FD= ActuatorOnHand
+assert Sensor [FD= SensorOnHand
 
 
 
--- Control_Initialise = (s_Control_Initialise -> start -> END).
--- Control_Register = (s_Control_Register -> END).
--- Control_Terminate = (s_Control_Terminate -> stop -> END).
--- Control_Analysis = (s_Control_Analysis -> query -> data -> command -> END).
--- HMSC_Control = (internalAction -> N0),
--- N0 = Control_Initialise;N0_Adj,
--- N1 = Control_Register;N1_Adj,
--- N2 = Control_Analysis;N2_Adj,
--- N3 = Control_Terminate;N3_Adj,
--- N0_Adj = (internalAction -> N1),
--- N1_Adj = (internalAction -> N1 | internalAction -> N2 | internalAction -> N3),
--- N2_Adj = (internalAction -> N1),
--- N3_Adj = (internalAction -> N0).
--- deterministic ||ControlWCoordAct = HMSC_Control\{internalAction}.
 
-
--- Database_Initialise = s_Database_Initialise -> SKIP
--- Database_Register = s_Database_Register -> pressure -> SKIP
--- Database_Terminate = s_Database_Terminate -> SKIP
--- Database_Analysis = s_Database_Analysis -> query -> data -> SKIP
--- HMSC_Database = internalAction -> N0
--- N0 = Database_Initialise;N0_Adj
--- N1 = Database_Register;N1_Adj
--- N2 = Database_Analysis;N2_Adj
--- N3 = Database_Terminate;N3_Adj
--- N0_Adj = internalAction -> N1
--- N1_Adj = internalAction -> N1 | internalAction -> N2 | internalAction -> N3
--- N2_Adj = internalAction -> N1
--- N3_Adj = internalAction -> N0
--- deterministic ||DatabaseWCoordAct = HMSC_Database\{internalAction}
-
--- channel up,down
--- COUNT(lo,n,hi) =
---     lo < n & down -> COUNT(lo,n-1,hi)
---   []
---     n < hi & up -> COUNT(lo,n+1, hi)
 
