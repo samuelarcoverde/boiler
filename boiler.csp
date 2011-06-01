@@ -57,10 +57,34 @@ Sensor = SensorWCoordAct \ internalEvents
 SensorOnHand = start -> pressure -> S1
 S1 = (pressure -> S1) [] (stop -> SensorOnHand)
 
+-- o refinamento no sentido contrario nao eh valido (*OnHand -> *), pois existem diferencas entre os
+-- os processos na semantica de falha/divergencia.
+
 assert Database [FD= DatabaseOnHand
 assert Control [FD= ControlOnHand
 assert Actuator [FD= ActuatorOnHand
 assert Sensor [FD= SensorOnHand
+
+--- experimento - a função de compressão "diamond" do fdr consegue gerar processos praticamente idênticos aos
+--- gerados com a keyword 'deterministic' no LTSA. A bronca eh que o FDR tem boa memoria: caso o processo que
+--- serah comprimido tenha nao-deterministico/livelock/deadlock, o FDR ira acusar essas propriedades no processo
+--- comprimido, mesmo que a maquina de estados dele nao apresente essas propriedades.
+
+transparent diamond
+DatabaseOpt = diamond(Database)
+ControlOpt = diamond(Control)
+ActuatorOpt = diamond(Actuator)
+SensorOpt = diamond(Sensor)
+
+assert Database [FD= DatabaseOpt
+assert Control [FD= ControlOpt
+assert Actuator [FD= ActuatorOpt
+assert Sensor [FD= SensorOpt
+assert DatabaseOpt [FD= Database
+assert ControlOpt [FD= Control
+assert ActuatorOpt [FD= Actuator
+assert SensorOpt [FD= Sensor
+---
 
 -- compositions
 
@@ -73,9 +97,13 @@ ArchitectureModelP1 = (DatabaseOnHand [dbAlph||ctAlph] ControlOnHand)
 ArchitectureModelP2 = (ArchitectureModelP1 [union(dbAlph,ctAlph)||acAlph] ActuatorOnHand)
 ArchitectureModel = (ArchitectureModelP2 [union(union(dbAlph,ctAlph),acAlph)||snAlph] SensorOnHand)
 
+dbCoorAlph = union(dbAlph,getModuleAlphabet(DB))
+ctCoorAlph = union(ctAlph,getModuleAlphabet(CT))
+snCoorAlph = union(snAlph,getModuleAlphabet(SN))
+acCoorAlph = union(acAlph,getModuleAlphabet(AC))
 
 
-
-
+--helpers
+getModuleAlphabet(b) = {sysEvent.b.x | x <- SysAction}
 
 
