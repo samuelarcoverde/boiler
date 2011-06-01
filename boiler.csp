@@ -564,7 +564,7 @@ Actuator_Initialise = sysEvent.AC.Initialise -> Actuator_Register
 Actuator_Register = sysEvent.AC.Register -> (Actuator_Register [] Actuator_Analysis [] Actuator_Terminate)
 Actuator_Terminate = sysEvent.AC.Terminate -> Actuator_Initialise
 Actuator_Analysis = sysEvent.AC.Analysis -> command -> Actuator_Register
-HMSC_Actuator = internalAction -> Actuator_Analysis
+HMSC_Actuator = internalAction -> Actuator_Initialise
 ActuatorWCoordAct = HMSC_Actuator\{internalAction}
 
 internalEvents = {sysEvent.x.y | x <- SysModule, y <- SysAction}
