@@ -1,7 +1,7 @@
 datatype SysModule = DB | SN | CT | AC
 datatype SysAction = Initialise | Register | Terminate | Analysis 
 
-channel query, data, pressure, stop, start, command -- global events
+channel query, data, pressure, sysstop, start, command -- global events
 channel internalAction -- placeholder event?
 channel sysEvent : SysModule.SysAction
 
@@ -548,14 +548,14 @@ DatabaseWCoordAct = HMSC_Database\{internalAction}
 
 Control_Initialise = sysEvent.CT.Initialise -> start -> Control_Register
 Control_Register = sysEvent.CT.Register -> (Control_Register [] Control_Analysis [] Control_Terminate)
-Control_Terminate = sysEvent.CT.Terminate -> stop -> Control_Initialise
+Control_Terminate = sysEvent.CT.Terminate -> sysstop -> Control_Initialise
 Control_Analysis = sysEvent.CT.Analysis -> query -> data -> command -> Control_Register
 HMSC_Control = internalAction -> Control_Initialise
 ControlWCoordAct = HMSC_Control\{internalAction}
 
 Sensor_Initialise = sysEvent.SN.Initialise -> start -> Sensor_Register
 Sensor_Register = sysEvent.SN.Register -> pressure -> (Sensor_Register [] Sensor_Terminate [] Sensor_Analysis)
-Sensor_Terminate = sysEvent.SN.Terminate -> stop -> Sensor_Initialise
+Sensor_Terminate = sysEvent.SN.Terminate -> sysstop -> Sensor_Initialise
 Sensor_Analysis = sysEvent.SN.Analysis -> Sensor_Register
 HMSC_Sensor = internalAction -> Sensor_Initialise
 SensorWCoordAct = HMSC_Sensor\{internalAction}
@@ -579,14 +579,14 @@ DH1 = pressure -> DH1 [] query -> data -> DatabaseOnHand
 
 Control = ControlWCoordAct \ internalEvents
 ControlOnHand = start -> C1
-C1 = (stop -> ControlOnHand) [] (query -> data -> command -> C1)
+C1 = (sysstop -> ControlOnHand) [] (query -> data -> command -> C1)
 
 Actuator = ActuatorWCoordAct \ internalEvents
 ActuatorOnHand = command -> ActuatorOnHand
 
 Sensor = SensorWCoordAct \ internalEvents
 SensorOnHand = start -> pressure -> S1
-S1 = (pressure -> S1) [] (stop -> SensorOnHand)
+S1 = (pressure -> S1) [] (sysstop -> SensorOnHand)
 
 -- o refinamento no sentido contrario nao eh valido (*OnHand -> *), pois existem diferencas entre os
 -- os processos na semantica de falha/divergencia.
@@ -597,10 +597,10 @@ assert Actuator [FD= ActuatorOnHand
 assert Sensor [FD= SensorOnHand
 
 --- experimento - a função de compressão "diamond" do fdr consegue gerar processos praticamente idênticos aos
---- gerados com a keyword 'deterministic' no LTSA. A bronca eh que o FDR tem boa memoria: caso o processo que
+--- gerados com o operador 'deterministic' no LTSA. A bronca eh que o FDR tem boa memoria: caso o processo que
 --- serah comprimido tenha nao-deterministico/livelock/deadlock, o FDR ira acusar essas propriedades no processo
 --- comprimido, mesmo que a maquina de estados dele nao apresente essas propriedades. Por essa razao, vamos utilizar
---- as versoes escritas a mao (on hand) no resto do projeto.
+--- as versoes escritas a mao (*onHand) no resto do projeto.
 
 transparent diamond
 DatabaseOpt = diamond(Database)
@@ -616,14 +616,14 @@ assert DatabaseOpt [FD= Database
 assert ControlOpt [FD= Control
 assert ActuatorOpt [FD= Actuator
 assert SensorOpt [FD= Sensor
----
 
 -- compositions
 
 dbAlph = {data,pressure,query}
-ctAlph = {command,data,query,start,stop}
-snAlph = {pressure,start,stop}
+ctAlph = {command,data,query,start,sysstop}
+snAlph = {pressure,start,sysstop}
 acAlph = {command}
+coordAlph = {data,pressure,query,command,start,sysstop}
 
 ArchitectureModelP1 = (DatabaseOnHand [dbAlph||ctAlph] ControlOnHand)
 ArchitectureModelP2 = (ArchitectureModelP1 [union(dbAlph,ctAlph)||acAlph] ActuatorOnHand)
@@ -638,8 +638,20 @@ ComponentsWCoordActP1 = (DatabaseWCoordAct [dbCoordAlph||ctCoordAlph] ControlWCo
 ComponentsWCoordActP2 = (ComponentsWCoordActP1 [union(dbCoordAlph,ctCoordAlph)||snCoordAlph] SensorWCoordAct)
 ComponentsWCoordAct = (ComponentsWCoordActP2 [union(union(dbCoordAlph,ctCoordAlph),snCoordAlph) || acCoordAlph] ActuatorWCoordAct)
 
------------- Trace Model ---------------
+--existe um deadlock no modelo original
+assert ComponentsWCoordAct :[ not deadlock free [F]]
 
+------------ Trace Model ---------------
+-- Vamos fazer o mesmo processo que foi feito com os modulos da arquitetura para
+-- simular o operador 'deterministic' no LTSA.
+
+TraceModelWithoutHiding = (ComponentsWCoordAct [|internalEvents|] Coordinator)
+TraceModel = TraceModelWithoutHiding \ internalEvents
+
+-- existe um deadlock no modelo original
+assert TraceModel :[ not deadlock free [F]]
+
+TraceModelOpt = diamond(TraceModel)
 
 
 
