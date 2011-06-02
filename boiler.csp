@@ -568,7 +568,6 @@ HMSC_Actuator = internalAction -> Actuator_Initialise
 ActuatorWCoordAct = HMSC_Actuator\{internalAction}
 
 internalEvents = {sysEvent.x.y | x <- SysModule, y <- SysAction}
---Database = DatabaseWCoordAct\{{|AllInternalEvents|}}
 
 -- Nos proximos processos, vamos simular a keyword "deterministic" do LTSA ao criar um processo igual ao
 -- processo "determinizado", e depois provar que ele eh um refinamento do processo original (sem deterministic)
@@ -589,18 +588,20 @@ SensorOnHand = start -> pressure -> S1
 S1 = (pressure -> S1) [] (sysstop -> SensorOnHand)
 
 -- o refinamento no sentido contrario nao eh valido (*OnHand -> *), pois existem diferencas entre os
--- os processos na semantica de falha/divergencia.
+-- os processos na semântica de falha/falha-divergencia.
 
 assert Database [FD= DatabaseOnHand
 assert Control [FD= ControlOnHand
 assert Actuator [FD= ActuatorOnHand
 assert Sensor [FD= SensorOnHand
 
+
 --- experimento - a função de compressão "diamond" do fdr consegue gerar processos praticamente idênticos aos
---- gerados com o operador 'deterministic' no LTSA. A bronca eh que o FDR tem boa memoria: caso o processo que
---- serah comprimido tenha nao-deterministico/livelock/deadlock, o FDR ira acusar essas propriedades no processo
---- comprimido, mesmo que a maquina de estados dele nao apresente essas propriedades. Por essa razao, vamos utilizar
---- as versoes escritas a mao (*onHand) no resto do projeto.
+--- gerados com o operador 'deterministic' no LTSA. O problema é que o FDR tem boa memoria: caso o processo que
+--- será comprimido tenha nao-determinismo/livelock/deadlock, o FDR ira acusar essas propriedades no processo
+--- comprimido, mesmo que a maquina de estados dele nao apresente essas propriedades. Por exemplo, o processo
+--- ArchitectureModel nao apresenta livelock e deadlock sob a semantica FD, mas o ArchitectureModelOpt apresenta.
+--- Por essa razao, vamos utilizar as versoes escritas a mao (*onHand) no resto do projeto.
 
 transparent diamond
 DatabaseOpt = diamond(Database)
@@ -629,6 +630,28 @@ ArchitectureModelP1 = (DatabaseOnHand [dbAlph||ctAlph] ControlOnHand)
 ArchitectureModelP2 = (ArchitectureModelP1 [union(dbAlph,ctAlph)||acAlph] ActuatorOnHand)
 ArchitectureModel = (ArchitectureModelP2 [union(union(dbAlph,ctAlph),acAlph)||snAlph] SensorOnHand)
 
+assert ArchitectureModel :[ deadlock free [FD]]
+assert ArchitectureModel :[ livelock free [FD]]
+
+--- tentando utilizar as versoes comprimidas com 'diamond'... ---
+
+ArchitectureModelP1Opt = (DatabaseOpt [dbAlph||ctAlph] ControlOpt)
+ArchitectureModelP2Opt = (ArchitectureModelP1Opt [union(dbAlph,ctAlph)||acAlph] ActuatorOpt)
+ArchitectureModelOpt = (ArchitectureModelP2Opt [union(union(dbAlph,ctAlph),acAlph)||snAlph] SensorOpt)
+
+assert ArchitectureModelOpt :[not deadlock free [FD]]
+assert ArchitectureModelOpt :[not livelock free [FD]]
+
+---- utilizando as versoes sem otimizacao -----------------------
+
+ArchitectureModelP1Pure = (Database [dbAlph||ctAlph] Control)
+ArchitectureModelP2Pure = (ArchitectureModelP1Pure [union(dbAlph,ctAlph)||acAlph] Actuator)
+ArchitectureModelPure = (ArchitectureModelP2Pure [union(union(dbAlph,ctAlph),acAlph)||snAlph] Sensor)
+
+ArchitectureModelPureOpt = diamond(ArchitectureModelPure)
+
+-----------------------------------------------------------------
+
 dbCoordAlph = union(dbAlph,getModuleAlphabet(DB))
 ctCoordAlph = union(ctAlph,getModuleAlphabet(CT))
 snCoordAlph = union(snAlph,getModuleAlphabet(SN))
@@ -651,7 +674,23 @@ TraceModel = TraceModelWithoutHiding \ internalEvents
 -- existe um deadlock no modelo original
 assert TraceModel :[ not deadlock free [F]]
 
-TraceModelOpt = diamond(TraceModel)
+TraceModelOnHands = start -> TraceModelOnHandsP1
+TraceModelOnHandsP1 = pressure -> TraceModelOnHandsP2
+TraceModelOnHandsP2 = pressure -> TraceModelOnHandsP2 [] sysstop -> TraceModelOnHands [] query -> data -> TraceModelOnHandsP3
+TraceModelOnHandsP3 = command -> TraceModelOnHandsP1 [] pressure -> TraceModelOnHandsP4
+TraceModelOnHandsP4 = pressure -> TraceModelOnHandsP4 [] command -> TraceModelOnHandsP2
+
+assert TraceModel [FD= TraceModelOnHands
+assert TraceModel [F= TraceModelOnHands
+assert TraceModel [T= TraceModelOnHands
+
+---------- properties --------------
+
+--- ConstraintModel é STOP, então as única propriedade que faz sentido traduzir é ImpliedScenarioCheck
+
+-- a keyword 'property' gera uma maquina de estados onde cada estado tem uma transição que leva para ERROR.
+-- Essa transição contém todas as labels do "conjunto de rejeição" do estado (todos os eventos que ele não aceita).
+
 
 
 
