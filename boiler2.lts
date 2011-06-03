@@ -1,0 +1,74 @@
+//------------------------------------------------------------------
+//------------------------ Architecture Model ----------------------
+//------------------------------------------------------------------
+
+////Component Database
+Database_Initialise = (s_Database_Initialise -> END).
+Database_Register = (s_Database_Register -> pressure -> END).
+Database_Terminate = (s_Database_Terminate -> END).
+Database_Analysis = (s_Database_Analysis -> query -> data -> END).
+HMSC_Database = (internalAction -> N0),
+N0 = Database_Initialise;N0_Adj,
+N1 = Database_Register;N1_Adj,
+N2 = Database_Analysis;N2_Adj,
+N3 = Database_Terminate;N3_Adj,
+N0_Adj = (internalAction -> N1),
+N1_Adj = (internalAction -> N1 | internalAction -> N2 | internalAction -> N3),
+N2_Adj = (internalAction -> N1),
+N3_Adj = (internalAction -> N0).
+deterministic ||DatabaseWCoordAct = HMSC_Database\{internalAction}.
+
+////Component Control
+Control_Initialise = (s_Control_Initialise -> start -> END).
+Control_Register = (s_Control_Register -> END).
+Control_Terminate = (s_Control_Terminate -> stop -> END).
+Control_Analysis = (s_Control_Analysis -> query -> data -> command -> END).
+HMSC_Control = (internalAction -> N0),
+N0 = Control_Initialise;N0_Adj,
+N1 = Control_Register;N1_Adj,
+N2 = Control_Analysis;N2_Adj,
+N3 = Control_Terminate;N3_Adj,
+N0_Adj = (internalAction -> N1),
+N1_Adj = (internalAction -> N1 | internalAction -> N2 | internalAction -> N3),
+N2_Adj = (internalAction -> N1),
+N3_Adj = (internalAction -> N0).
+deterministic ||ControlWCoordAct = HMSC_Control\{internalAction}.
+
+////Component Sensor
+Sensor_Initialise = (s_Sensor_Initialise -> start -> END).
+Sensor_Register = (s_Sensor_Register -> pressure -> END).
+Sensor_Terminate = (s_Sensor_Terminate -> stop -> END).
+Sensor_Analysis = (s_Sensor_Analysis -> END).
+HMSC_Sensor = (internalAction -> N0),
+N0 = Sensor_Initialise;N0_Adj,
+N1 = Sensor_Register;N1_Adj,
+N2 = Sensor_Analysis;N2_Adj,
+N3 = Sensor_Terminate;N3_Adj,
+N0_Adj = (internalAction -> N1),
+N1_Adj = (internalAction -> N1 | internalAction -> N2 | internalAction -> N3),
+N2_Adj = (internalAction -> N1),
+N3_Adj = (internalAction -> N0).
+deterministic ||SensorWCoordAct = HMSC_Sensor\{internalAction}.
+
+////Component Actuator
+Actuator_Initialise = (s_Actuator_Initialise -> END).
+Actuator_Register = (s_Actuator_Register -> END).
+Actuator_Terminate = (s_Actuator_Terminate -> END).
+Actuator_Analysis = (s_Actuator_Analysis -> command -> END).
+HMSC_Actuator = (internalAction -> N0),
+N0 = Actuator_Initialise;N0_Adj,
+N1 = Actuator_Register;N1_Adj,
+N2 = Actuator_Analysis;N2_Adj,
+N3 = Actuator_Terminate;N3_Adj,
+N0_Adj = (internalAction -> N1),
+N1_Adj = (internalAction -> N1 | internalAction -> N2 | internalAction -> N3),
+N2_Adj = (internalAction -> N1),
+N3_Adj = (internalAction -> N0).
+deterministic ||ActuatorWCoordAct = HMSC_Actuator\{internalAction}.
+||ComponentsWCoordAct = (DatabaseWCoordAct || ControlWCoordAct || SensorWCoordAct || ActuatorWCoordAct).
+
+minimal ||Database = DatabaseWCoordAct\{s_Actuator_Terminate,s_Actuator_Register,s_Control_Initialise,s_Actuator_Initialise,s_Sensor_Initialise,s_Actuator_Analysis,s_Control_Register,s_Database_Analysis,s_Control_Terminate,s_Sensor_Register,s_Database_Register,s_Sensor_Terminate,s_Control_Analysis,s_Database_Terminate,s_Database_Initialise,s_Sensor_Analysis}.
+minimal ||Control = ControlWCoordAct\{s_Actuator_Terminate,s_Actuator_Register,s_Control_Initialise,s_Actuator_Initialise,s_Sensor_Initialise,s_Actuator_Analysis,s_Control_Register,s_Database_Analysis,s_Control_Terminate,s_Sensor_Register,s_Database_Register,s_Sensor_Terminate,s_Control_Analysis,s_Database_Terminate,s_Database_Initialise,s_Sensor_Analysis}.
+minimal ||Sensor = SensorWCoordAct\{s_Actuator_Terminate,s_Actuator_Register,s_Control_Initialise,s_Actuator_Initialise,s_Sensor_Initialise,s_Actuator_Analysis,s_Control_Register,s_Database_Analysis,s_Control_Terminate,s_Sensor_Register,s_Database_Register,s_Sensor_Terminate,s_Control_Analysis,s_Database_Terminate,s_Database_Initialise,s_Sensor_Analysis}.
+minimal ||Actuator = ActuatorWCoordAct\{s_Actuator_Terminate,s_Actuator_Register,s_Control_Initialise,s_Actuator_Initialise,s_Sensor_Initialise,s_Actuator_Analysis,s_Control_Register,s_Database_Analysis,s_Control_Terminate,s_Sensor_Register,s_Database_Register,s_Sensor_Terminate,s_Control_Analysis,s_Database_Terminate,s_Database_Initialise,s_Sensor_Analysis}.
+minimal ||ArchitectureModel = (Database || Control || Sensor || Actuator).

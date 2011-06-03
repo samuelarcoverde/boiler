@@ -6,6 +6,9 @@ channel internalAction -- placeholder event?
 channel sysEvent : SysModule.SysAction
 
 ------------- COORDINATOR (o processo composto pelas primeiras 500 linhas do boiler.lts ----------
+--- nao mais utilizado (ele seria composto com o ComponentsWCoordAct, mas o processo resultante (TraceModel) utiliza 
+-- 'deterministic' :(
+
 Coordinator = N189
 N1 = sysEvent.AC.Initialise -> N512
 N2 = sysEvent.DB.Initialise -> N136
@@ -601,7 +604,7 @@ assert Sensor [FD= SensorOnHand
 --- será comprimido tenha nao-determinismo/livelock/deadlock, o FDR ira acusar essas propriedades no processo
 --- comprimido, mesmo que a maquina de estados dele nao apresente essas propriedades. Por exemplo, o processo
 --- ArchitectureModel nao apresenta livelock e deadlock sob a semantica FD, mas o ArchitectureModelOpt apresenta.
---- Por essa razao, vamos utilizar as versoes escritas a mao (*onHand) no resto do projeto.
+--- Nossa ideia inicial foi utlizar esses processos no resto do projeto, mas ela foi rapidamente descartada. 
 
 transparent diamond
 DatabaseOpt = diamond(Database)
@@ -633,7 +636,7 @@ ArchitectureModel = (ArchitectureModelP2 [union(union(dbAlph,ctAlph),acAlph)||sn
 assert ArchitectureModel :[ deadlock free [FD]]
 assert ArchitectureModel :[ livelock free [FD]]
 
---- tentando utilizar as versoes comprimidas com 'diamond'... ---
+--- versoes comprimidas com 'diamond' - unica maneira de conseguir gerar uma imagem ---
 
 ArchitectureModelP1Opt = (DatabaseOpt [dbAlph||ctAlph] ControlOpt)
 ArchitectureModelP2Opt = (ArchitectureModelP1Opt [union(dbAlph,ctAlph)||acAlph] ActuatorOpt)
@@ -641,6 +644,7 @@ ArchitectureModelOpt = (ArchitectureModelP2Opt [union(union(dbAlph,ctAlph),acAlp
 
 assert ArchitectureModelOpt :[not deadlock free [FD]]
 assert ArchitectureModelOpt :[not livelock free [FD]]
+assert ArchitectureModelOpt :[not deterministic [FD]]
 
 ---- utilizando as versoes sem otimizacao -----------------------
 
@@ -663,36 +667,6 @@ ComponentsWCoordAct = (ComponentsWCoordActP2 [union(union(dbCoordAlph,ctCoordAlp
 
 --existe um deadlock no modelo original
 assert ComponentsWCoordAct :[ not deadlock free [F]]
-
------------- Trace Model ---------------
--- Vamos fazer o mesmo processo que foi feito com os modulos da arquitetura para
--- simular o operador 'deterministic' no LTSA.
-
-TraceModelWithoutHiding = (ComponentsWCoordAct [|internalEvents|] Coordinator)
-TraceModel = TraceModelWithoutHiding \ internalEvents
-
--- existe um deadlock no modelo original
-assert TraceModel :[ not deadlock free [F]]
-
-TraceModelOnHands = start -> TraceModelOnHandsP1
-TraceModelOnHandsP1 = pressure -> TraceModelOnHandsP2
-TraceModelOnHandsP2 = pressure -> TraceModelOnHandsP2 [] sysstop -> TraceModelOnHands [] query -> data -> TraceModelOnHandsP3
-TraceModelOnHandsP3 = command -> TraceModelOnHandsP1 [] pressure -> TraceModelOnHandsP4
-TraceModelOnHandsP4 = pressure -> TraceModelOnHandsP4 [] command -> TraceModelOnHandsP2
-
-assert TraceModel [FD= TraceModelOnHands
-assert TraceModel [F= TraceModelOnHands
-assert TraceModel [T= TraceModelOnHands
-
----------- properties --------------
-
---- ConstraintModel é STOP, então as única propriedade que faz sentido traduzir é ImpliedScenarioCheck
-
--- a keyword 'property' gera uma maquina de estados onde cada estado tem uma transição que leva para ERROR.
--- Essa transição contém todas as labels do "conjunto de rejeição" do estado (todos os eventos que ele não aceita).
-
-
-
 
 --helpers
 getModuleAlphabet(b) = {sysEvent.b.x | x <- SysAction}
