@@ -593,10 +593,10 @@ S1 = (pressure -> S1) [] (sysstop -> SensorOnHand)
 -- o refinamento no sentido contrario nao eh valido (*OnHand -> *), pois existem diferencas entre os
 -- os processos na semântica de falha/falha-divergencia.
 
-assert Database [FD= DatabaseOnHand
-assert Control [FD= ControlOnHand
-assert Actuator [FD= ActuatorOnHand
-assert Sensor [FD= SensorOnHand
+--assert Database [FD= DatabaseOnHand
+--assert Control [FD= ControlOnHand
+--assert Actuator [FD= ActuatorOnHand
+--assert Sensor [FD= SensorOnHand
 
 
 --- experimento - a função de compressão "diamond" do fdr consegue gerar processos praticamente idênticos aos
@@ -612,14 +612,14 @@ ControlOpt = diamond(Control)
 ActuatorOpt = diamond(Actuator)
 SensorOpt = diamond(Sensor)
 
-assert Database [FD= DatabaseOpt
-assert Control [FD= ControlOpt
-assert Actuator [FD= ActuatorOpt
-assert Sensor [FD= SensorOpt
-assert DatabaseOpt [FD= Database
-assert ControlOpt [FD= Control
-assert ActuatorOpt [FD= Actuator
-assert SensorOpt [FD= Sensor
+--assert Database [FD= DatabaseOpt
+--assert Control [FD= ControlOpt
+--assert Actuator [FD= ActuatorOpt
+--assert Sensor [FD= SensorOpt
+--assert DatabaseOpt [FD= Database
+--assert ControlOpt [FD= Control
+--assert ActuatorOpt [FD= Actuator
+--assert SensorOpt [FD= Sensor
 
 -- compositions
 
@@ -633,18 +633,18 @@ ArchitectureModelP1 = (DatabaseOnHand [dbAlph||ctAlph] ControlOnHand)
 ArchitectureModelP2 = (ArchitectureModelP1 [union(dbAlph,ctAlph)||acAlph] ActuatorOnHand)
 ArchitectureModel = (ArchitectureModelP2 [union(union(dbAlph,ctAlph),acAlph)||snAlph] SensorOnHand)
 
-assert ArchitectureModel :[ deadlock free [FD]]
-assert ArchitectureModel :[ livelock free [FD]]
+--assert ArchitectureModel :[ deadlock free [F]]
+--assert ArchitectureModel :[ livelock free [FD]]
 
---- versoes comprimidas com 'diamond' - unica maneira de conseguir gerar uma imagem ---
+--- versao comprimida com 'diamond' ---
 
 ArchitectureModelP1Opt = (DatabaseOpt [dbAlph||ctAlph] ControlOpt)
 ArchitectureModelP2Opt = (ArchitectureModelP1Opt [union(dbAlph,ctAlph)||acAlph] ActuatorOpt)
 ArchitectureModelOpt = (ArchitectureModelP2Opt [union(union(dbAlph,ctAlph),acAlph)||snAlph] SensorOpt)
 
-assert ArchitectureModelOpt :[not deadlock free [FD]]
-assert ArchitectureModelOpt :[not livelock free [FD]]
-assert ArchitectureModelOpt :[not deterministic [FD]]
+--assert ArchitectureModelOpt :[not deadlock free [F]]
+--assert ArchitectureModelOpt :[not livelock free [FD]]
+--assert ArchitectureModelOpt :[not deterministic [F]]
 
 ---- utilizando as versoes sem otimizacao -----------------------
 
@@ -652,7 +652,16 @@ ArchitectureModelP1Pure = (Database [dbAlph||ctAlph] Control)
 ArchitectureModelP2Pure = (ArchitectureModelP1Pure [union(dbAlph,ctAlph)||acAlph] Actuator)
 ArchitectureModelPure = (ArchitectureModelP2Pure [union(union(dbAlph,ctAlph),acAlph)||snAlph] Sensor)
 
+assert ArchitectureModelPure :[not deadlock free [FD]]
+assert ArchitectureModelPure :[not livelock free [FD]]
+assert ArchitectureModelPure :[not deterministic [F]]
+
+
 ArchitectureModelPureOpt = diamond(ArchitectureModelPure)
+--assert ArchitectureModelPureOpt :[not deadlock free [F]]
+--assert ArchitectureModelPureOpt :[not livelock free [FD]]
+--assert ArchitectureModelPureOpt :[not deterministic [F]]
+
 
 -----------------------------------------------------------------
 
@@ -666,7 +675,7 @@ ComponentsWCoordActP2 = (ComponentsWCoordActP1 [union(dbCoordAlph,ctCoordAlph)||
 ComponentsWCoordAct = (ComponentsWCoordActP2 [union(union(dbCoordAlph,ctCoordAlph),snCoordAlph) || acCoordAlph] ActuatorWCoordAct)
 
 --existe um deadlock no modelo original
-assert ComponentsWCoordAct :[ not deadlock free [F]]
+--assert ComponentsWCoordAct :[ not deadlock free [F]]
 
 --helpers
 getModuleAlphabet(b) = {sysEvent.b.x | x <- SysAction}
